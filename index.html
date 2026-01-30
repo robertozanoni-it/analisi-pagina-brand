@@ -798,14 +798,15 @@
     ));
 
     // 13. Scorecard
+    const dist = c ? paletteDistance(b.assets[0]?.palette||[], c.assets[0]?.palette||[]) : 50;
     const scorecardHtml = `
       <table class="scorecard-table">
         <thead><tr><th>Categoria</th><th>Score</th><th>Stato</th></tr></thead>
         <tbody>
-          <tr><td>Visual Identity</td><td>${b.metrics.visualIdentity}</td><td>${badgeFor(b.metrics.visualIdentity)}</td></tr>
+          <tr><td>Identità Visiva</td><td>${b.metrics.visualIdentity}</td><td>${badgeFor(b.metrics.visualIdentity)}</td></tr>
           <tr><td>Leggibilità</td><td>${b.metrics.readability}</td><td>${badgeFor(b.metrics.readability)}</td></tr>
           <tr><td>Coerenza</td><td>${b.metrics.consistency}</td><td>${badgeFor(b.metrics.consistency)}</td></tr>
-          <tr><td>Distanza</td><td>${c ? b.metrics.distinctiveness : 50}</td><td>${badgeFor(50)}</td></tr>
+          <tr><td>Distanza</td><td>${round(dist)}</td><td>${badgeFor(round(dist))}</td></tr>
         </tbody>
       </table>
     `;
@@ -985,6 +986,7 @@
     ));
 
     // 13. Scorecard Finale
+    const diffScore = c ? clamp(50 + (brandOverall - c.scores.overall) / 2, 0, 100) : 50;
     const scorecardHtml = `
       <table class="scorecard-table">
         <thead><tr><th>Categoria</th><th>Score</th><th>Stato</th></tr></thead>
@@ -992,7 +994,7 @@
           <tr><td>Strategia</td><td>${manualBundle}</td><td>${badgeFor(manualBundle)}</td></tr>
           <tr><td>Copywriting</td><td>${b.scores.clarity}</td><td>${badgeFor(b.scores.clarity)}</td></tr>
           <tr><td>Fiducia</td><td>${b.scores.trust}</td><td>${badgeFor(b.scores.trust)}</td></tr>
-          <tr><td>Differenziazione</td><td>${c ? 50+(brandOverall-c.scores.overall)/2 : 50}</td><td>${badgeFor(50)}</td></tr>
+          <tr><td>Differenziazione</td><td>${round(diffScore)}</td><td>${badgeFor(round(diffScore))}</td></tr>
         </tbody>
       </table>
     `;
