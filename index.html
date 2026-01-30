@@ -458,7 +458,6 @@
         palette,
         contrast,
         clutter
-      Alberta
       });
     }
     // aggregate
@@ -751,10 +750,10 @@
     // Distintività vs competitor (se presente)
     if(c){
       // Compare palettes
-      const dist = clamp(100 - paletteDistance(
+      const dist = paletteDistance(
         b.assets[0]?.palette||[],
         c.assets[0]?.palette||[]
-      ), 0, 100);
+      );
       const compHtml = `<div class="two">
         <div><div class="mini"><b>Palette — ${bName}</b></div>${palHtml(bPal)}</div>
         <div><div class="mini"><b>Palette — ${cName}</b></div>${palHtml(cPal)}</div>
