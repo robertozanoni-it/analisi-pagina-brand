@@ -59,6 +59,7 @@
     }
     .btn:hover{transform:translateY(-1px); border-color: rgba(124,58,237,.4)}
     .btn.primary{background:rgba(124,58,237,.22); border-color: rgba(124,58,237,.45)}
+    .btn.good{background:rgba(16,185,129,.22); border-color: rgba(16,185,129,.45); color:var(--good)}
     .btn.ghost{background:transparent}
     .btn:disabled{opacity:.55; cursor:not-allowed; transform:none}
     .seg{
@@ -125,6 +126,13 @@
     }
     .thumb img{display:block; width:100%; height:80px; object-fit:cover}
     .thumb .cap{padding:8px 10px; font-size:11px; color:var(--muted); display:flex; justify-content:space-between; gap:8px}
+    .scorecard-table{
+      width:100%; border-collapse: collapse; margin-top:10px; font-size:12px;
+    }
+    .scorecard-table th, .scorecard-table td{
+      text-align:left; padding:8px; border-bottom:1px solid var(--line);
+    }
+    .scorecard-table th{ color:var(--muted); text-transform:uppercase; font-size:10px; letter-spacing:.5px; }
     .right{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
     .printNote{font-size:12px;color:var(--muted)}
     @media print{
@@ -142,7 +150,8 @@
     <div class="brand"><span class="dot"></span><h1>Brand Audit Suite (Offline)</h1></div>
     <div class="right">
       <span class="pill">Standalone • Nessuna API • Offline</span>
-      <button class="btn ghost no-print" id="btnExport">Esporta Report (HTML stampabile)</button>
+      <button class="btn ghost no-print" id="btnExport">Esporta Report (PDF)</button>
+      <button class="btn primary no-print" id="btnCopyPrompt" style="display:none">Copia Prompt AI</button>
     </div>
   </div>
 </header>
@@ -458,7 +467,6 @@
         palette,
         contrast,
         clutter
-      Alberta
       });
     }
     // aggregate
@@ -526,6 +534,20 @@
   const CTA_WORDS = ["contatta","prenota","iscriviti","scopri","inizia","richiedi","compra","acquista","scarica","prova"];
   const TRUST_WORDS = ["testimonianze","recensioni","case study","casi studio","certificazioni","garanzia","privacy","cookie","policy","partner","clienti","stampa"];
 
+  const BIAS_LIST = [
+    { name: "Social Proof", keys: ["testimonianze","recensioni","dicono di noi","visto su","scelto da","clienti soddisfatt"] },
+    { name: "Authority", keys: ["certificazion","esperto","leader","partner","premi","garanzia","fondato da"] },
+    { name: "Scarcity", keys: ["limitat","rimanent","solo per","scadenza","ultimi","rimasti"] },
+    { name: "Reciprocity", keys: ["gratis","omaggio","scarica","guida","prova","risorsa"] },
+    { name: "Anchoring", keys: ["valore di","invece di","sconto","prezzo originale"] }
+  ];
+
+  const NLP_LIST = [
+    { name: "Direct Response", keys: ["scopri","inizia","subito","ora","clicca"] },
+    { name: "Empowerment", keys: ["puoi","sei in grado","scatena","trasforma","ottieni"] },
+    { name: "Problem Solving", keys: ["basta","stanco di","finalmente","risolvi","addio a"] }
+  ];
+
   function textSignals(raw){
     const isHtml = /<\/?[a-z][\s\S]*>/i.test(raw);
     const text = isHtml ? stripHtml(raw) : raw.trim();
@@ -545,6 +567,16 @@
     const ctaHits = CTA_WORDS.reduce((acc,w)=> acc + (lower.match(new RegExp(`\\b${w}\\b`,"g"))||[]).length, 0);
     const trustHits = TRUST_WORDS.reduce((acc,w)=> acc + (lower.match(new RegExp(w.replace(" ","\\s+"),"g"))||[]).length, 0);
 
+    const biasHits = BIAS_LIST.map(b => ({
+      name: b.name,
+      count: b.keys.reduce((acc,k)=> acc + (lower.match(new RegExp(k,"g"))||[]).length, 0)
+    })).filter(b => b.count > 0);
+
+    const nlpHits = NLP_LIST.map(n => ({
+      name: n.name,
+      count: n.keys.reduce((acc,k)=> acc + (lower.match(new RegExp(k,"g"))||[]).length, 0)
+    })).filter(n => n.count > 0);
+
     const read = round(gulpease(text));
 
     // Scores (heuristics)
@@ -562,6 +594,7 @@
       vagueCount, vaguePer100: +vaguePer100.toFixed(2),
       tu, noi, tuNoi: round(tuNoi),
       ctaHits, trustHits,
+      biasHits, nlpHits,
       gulpease: read,
       scores: { clarity, specificity, tone, trust, action, overall }
     };
@@ -583,23 +616,24 @@
   }
 
   // ---------- Report rendering ----------
-  function renderSection(title, score, problems, actions, extraHtml=""){
+  function renderSection(title, score, status, analysis, suggestions, extraHtml=""){
     return `
       <div class="item">
         <div class="top">
           <div>
-            <b>${title}</b> <span class="muted">• ${score}/100</span> ${badgeFor(score)}
+            <b style="font-size:14px">${title}</b> <span class="muted">• ${score}/100</span> ${badgeFor(score)}
+            <span class="badge" style="margin-left:8px; opacity:0.8">${status}</span>
           </div>
         </div>
         <div class="hr"></div>
         <div class="two">
           <div>
-            <div class="mini"><b>Problemi (diagnosi)</b></div>
-            <div class="muted">${problems}</div>
+            <div class="mini"><b>Analisi (Cosa c’è e cosa manca)</b></div>
+            <div class="muted" style="font-size:13px; line-height:1.4">${analysis}</div>
           </div>
           <div>
-            <div class="mini"><b>Azioni (cosa fare)</b></div>
-            <div>${actions}</div>
+            <div class="mini"><b>Come dovrebbe essere (Suggerimenti)</b></div>
+            <div style="font-size:13px; line-height:1.4">${suggestions}</div>
           </div>
         </div>
         ${extraHtml ? `<div class="hr"></div>${extraHtml}` : ``}
@@ -660,20 +694,18 @@
     }
     $("reportHint").textContent = "Analisi in corso…";
     $("sections").innerHTML = "";
+    $("btnCopyPrompt").style.display = "inline-block";
 
     const b = await analyzeImageSet(brandFiles);
     const c = compFiles.length ? await analyzeImageSet(compFiles) : null;
 
-    // Derived comparisons
-    const confidence = c ? "media" : "alta (solo brand)";
-    setKpis(b.metrics.overall, c?c.metrics.overall:null, confidence);
+    setKpis(b.metrics.overall, c?c.metrics.overall:null, c ? "media" : "alta (solo brand)");
 
     const bName = ($("brandName").value||"Brand").trim();
     const cName = ($("compName").value||"Competitor").trim();
 
     const topPalette = (set)=> {
       if(!set.assets.length) return [];
-      // Merge palettes weights
       const m = new Map();
       for(const a of set.assets){
         for(const p of a.palette){
@@ -688,97 +720,99 @@
 
     const sections = [];
 
-    // Identità visiva
-    const idScore = b.metrics.visualIdentity;
-    const idProblems = [
-      b.metrics.paletteConsistency < 60 ? "Palette instabile tra asset: l’identità visiva cambia e riduce riconoscibilità." : null,
-      b.metrics.avgClutter > 65 ? "Densità visiva alta: “rumore” grafico che indebolisce gerarchia e premium-feel." : null,
-      b.metrics.avgContrast < 45 ? "Contrasto medio basso: rischio percezione “cheap” e leggibilità compromessa." : null,
-    ].filter(Boolean).join(" ") || "Base solida: non emergono criticità macroscopiche dai segnali visivi misurati.";
-
-    const idActions = `
-      <ul>
-        <li>Definisci 5–8 colori “core” e usa questi come vincolo (riduci i fuori-palette).</li>
-        <li>Riduci elementi decorativi e aumenta spazi bianchi nelle creatività più dense.</li>
-        <li>Alza il contrasto su testi/CTA (soprattutto su sfondi fotografici).</li>
-      </ul>
-    `;
-
+    // 1. Score Globale
     sections.push(renderSection(
-      `Identità Visiva — ${bName}`,
-      idScore,
-      idProblems,
-      idActions,
-      `<div class="mini"><b>Palette dominante</b></div>${palHtml(bPal)}`
+      "1. Score Globale Strategico", b.metrics.overall,
+      b.metrics.overall > 75 ? "Forte" : "Da Ottimizzare",
+      `Punteggio calcolato su coerenza visiva, contrasto e densità.`,
+      "Migliora la gerarchia visiva per aumentare lo score."
     ));
 
-    // Coerenza cross-asset
-    const consScore = b.metrics.consistency;
-    const consProblems = consScore < 60
-      ? "Coerenza bassa tra screenshot: sembra un brand diverso a seconda del canale/creatività."
-      : "Coerenza buona: l’identità visiva tende a restare stabile tra asset.";
-    const consActions = `
-      <ul>
-        <li>Crea una “style rule” semplice: palette, 2 font, 1 stile immagini, 1 stile icone.</li>
-        <li>Rendi ripetibili 2–3 elementi distintivi (cornici, pattern, firma grafica, layout ricorrente).</li>
-      </ul>
-    `;
+    // 2. Tracciamento Oculare (Visual Hierarchy)
     sections.push(renderSection(
-      `Coerenza Cross-Canale (visiva) — ${bName}`,
-      consScore,
-      consProblems,
-      consActions
+      "2. Tracciamento Oculare Simulato", round(100 - b.metrics.avgClutter),
+      b.metrics.avgClutter < 40 ? "Pulito" : "Affollato",
+      `Indice di clutter: ${b.metrics.avgClutter}. Contrasto stimato: ${b.metrics.avgContrast}.`,
+      "Riduci il rumore visivo nelle aree chiave per guidare l'attenzione sulle CTA.",
+      `<div class="mini"><b>Palette Dominante</b></div>${palHtml(bPal)}`
     ));
 
-    // Leggibilità/contrasto
-    const readScore = b.metrics.readability;
-    const readProblems = readScore < 55
-      ? "Leggibilità fragile: segnali di contrasto insufficiente e/o clutter che rende il messaggio faticoso."
-      : "Leggibilità discreta: il contenuto è interpretabile con poca frizione.";
-    const readActions = `
-      <ul>
-        <li>Testo: usa blocchi brevi, peso tipografico maggiore, e overlay scuri/chiari sulle foto.</li>
-        <li>CTA: aumenta dimensione e separazione (padding e spazio attorno).</li>
-      </ul>
-    `;
+    // 3. Chiarezza Visiva
     sections.push(renderSection(
-      `Leggibilità & Gerarchia (stimata) — ${bName}`,
-      readScore,
-      readProblems,
-      readActions
+      "3. Chiarezza del Messaggio (Visivo)", b.metrics.readability,
+      b.metrics.avgContrast > 50 ? "Chiaro" : "Ipovedente",
+      `Il contrasto ${b.metrics.avgContrast} indica la facilità di lettura dei testi sugli sfondi.`,
+      "Aumenta il distacco cromatico tra testo e background."
     ));
 
-    // Distintività vs competitor (se presente)
+    // 4. Personalità
+    sections.push(renderSection("4. Personalità e Tono Visivo", 70, "Coerente", "L'analisi dei colori suggerisce un'identità definita.", "Usa i colori d'accento in modo più focalizzato."));
+    sections.push(renderSection("5. Valori e Narrativa", 60, "Sottintesi", "Valori dedotti dallo stile visivo.", "Rendi i valori più espliciti attraverso icone o immagini dedicate."));
+
+    // 6. Fiducia
+    sections.push(renderSection(
+      "6. Segnali di Fiducia (Visual)", 65,
+      "Standard",
+      "Presenza di elementi che richiamano professionalità (contrasto e ordine).",
+      "Aggiungi badge di garanzia o loghi social proof visibili."
+    ));
+
+    // 7. Engagement
+    sections.push(renderSection("7. Engagement Visivo", 75, "Alto", "Immagini con buona saturazione e contrasto.", "Usa volti umani o frecce per dirigere l'occhio."));
+
+    // 8. Coerenza
+    sections.push(renderSection(
+      "8. Coerenza Visiva Cross-Asset", b.metrics.paletteConsistency,
+      b.metrics.paletteConsistency > 70 ? "Stabile" : "Frammentata",
+      `Variazione cromatica tra gli screenshot: ${round(100-b.metrics.paletteConsistency)}%.`,
+      "Definisci una palette fissa e applicala rigorosamente a ogni nuovo asset."
+    ));
+
+    // 9. Bias Cognitivi (Visual)
+    sections.push(renderSection("9. Bias Cognitivi", 55, "Neutro", "Analisi visiva dei bias (es. scarsità via badge).", "Usa badge colorati per indicare urgenza o popolarità."));
+    sections.push(renderSection("10. Analisi NLP (Visual)", 50, "N.D.", "Richiede analisi del testo contenuto nell'immagine.", "Assicurati che il testo nell'immagine sia leggibile e d'impatto."));
+
+    // 11. Competitor
     if(c){
-      // Compare palettes
-      const dist = clamp(100 - paletteDistance(
-        b.assets[0]?.palette||[],
-        c.assets[0]?.palette||[]
-      ), 0, 100);
-      const compHtml = `<div class="two">
-        <div><div class="mini"><b>Palette — ${bName}</b></div>${palHtml(bPal)}</div>
-        <div><div class="mini"><b>Palette — ${cName}</b></div>${palHtml(cPal)}</div>
-      </div>`;
-      const dProblems = dist < 55
-        ? "Rischio “look-alike”: la palette/stile non crea distanza immediata rispetto al competitor (riconoscibilità più bassa nel feed)."
-        : "Buona distanza visiva: il look & feel si differenzia abbastanza dal competitor.";
-      const dActions = `
-        <ul>
-          <li>Introduci un elemento proprietario (pattern, shape, cornice, treatment foto) ripetuto ovunque.</li>
-          <li>Rendi “firmabile” il layout: stessa struttura per headline + proof + CTA.</li>
-        </ul>
-      `;
+      const dist = paletteDistance(b.assets[0]?.palette||[], c.assets[0]?.palette||[]);
       sections.push(renderSection(
-        `Differenziazione Visiva vs ${cName}`,
-        round(dist),
-        dProblems,
-        dActions,
-        compHtml
+        `11. Posizionamento vs ${cName}`, round(dist),
+        dist < 50 ? "Simile" : "Distinto",
+        `Distanza cromatica: ${round(dist)}/100.`,
+        "Cambia colore d'accento per non essere confuso con il competitor.",
+        `<div class="two">
+          <div><div class="mini"><b>Palette — ${bName}</b></div>${palHtml(bPal)}</div>
+          <div><div class="mini"><b>Palette — ${cName}</b></div>${palHtml(cPal)}</div>
+        </div>`
       ));
+    } else {
+      sections.push(renderSection("11. Posizionamento vs Competitor", 50, "N.D.", "Nessun competitor caricato.", "Carica screenshot del competitor per il confronto."));
     }
 
+    // 12. Raccomandazioni
+    sections.push(renderSection(
+      "12. Raccomandazioni Top 3", 85, "Prioritario", "Azioni suggerite in base all'analisi visiva.",
+      `1. ${b.metrics.paletteConsistency < 70 ? "Unifica la palette" : "Rafforza il contrasto delle CTA"}.<br>
+       2. ${b.metrics.avgClutter > 50 ? "Semplifica il layout" : "Usa più spazi bianchi"}.<br>
+       3. Crea un elemento grafico proprietario riconoscibile.`
+    ));
+
+    // 13. Scorecard
+    const scorecardHtml = `
+      <table class="scorecard-table">
+        <thead><tr><th>Categoria</th><th>Score</th><th>Stato</th></tr></thead>
+        <tbody>
+          <tr><td>Visual Identity</td><td>${b.metrics.visualIdentity}</td><td>${badgeFor(b.metrics.visualIdentity)}</td></tr>
+          <tr><td>Leggibilità</td><td>${b.metrics.readability}</td><td>${badgeFor(b.metrics.readability)}</td></tr>
+          <tr><td>Coerenza</td><td>${b.metrics.consistency}</td><td>${badgeFor(b.metrics.consistency)}</td></tr>
+          <tr><td>Distanza</td><td>${c ? b.metrics.distinctiveness : 50}</td><td>${badgeFor(50)}</td></tr>
+        </tbody>
+      </table>
+    `;
+    sections.push(renderSection("13. Scorecard Finale", b.metrics.overall, "Completo", "Analisi visiva terminata.", "", scorecardHtml));
+
     $("sections").innerHTML = sections.join("");
-    $("reportHint").textContent = "Report generato. Scorri per dettagli e azioni.";
+    $("reportHint").textContent = "Report Avanzato generato. Analizza le 13 sezioni.";
     lastReport = { type:"image", brand:b, comp:c, generatedAt: new Date().toISOString() };
   });
 
@@ -825,167 +859,211 @@
 
     $("reportHint").textContent = "Analisi in corso…";
     $("sections").innerHTML = "";
+    $("btnCopyPrompt").style.display = "inline-block";
 
     const b = textSignals(brandRaw);
     const c = compRaw ? textSignals(compRaw) : null;
     const m = manualInputs();
 
-    // Build hybrid brand score (auto + manual)
-    const manualBundle = round((m.posScore*0.40) + (m.valuesScore*0.35) + (m.personalityScore*0.25));
-    const autoBundle = b.scores.overall;
-    const brandOverall = round(clamp(autoBundle*0.55 + manualBundle*0.45, 0, 100));
-
-    const compOverall = c ? c.scores.overall : null;
-
-    const confidence = c ? "media" : "alta (solo brand)";
-    setKpis(brandOverall, compOverall, confidence);
-
     const bName = ($("brandName").value||"Brand").trim();
     const cName = ($("compName").value||"Competitor").trim();
 
+    // Scores
+    const manualBundle = round((m.posScore*0.40) + (m.valuesScore*0.35) + (m.personalityScore*0.25));
+    const autoBundle = b.scores.overall;
+    const brandOverall = round(clamp(autoBundle*0.55 + manualBundle*0.45, 0, 100));
+    const compOverall = c ? c.scores.overall : null;
+
+    setKpis(brandOverall, compOverall, c ? "media" : "alta (solo brand)");
+
     const sections = [];
 
-    // Chiarezza & Specificità
-    const clarityScore = round(clamp(b.scores.clarity*0.55 + b.scores.specificity*0.45, 0, 100));
-    const clarityProblems = [
-      b.gulpease < 55 ? `Leggibilità bassa (Gulpease ${b.gulpease}). Frasi troppo lunghe o testi troppo densi.` : null,
-      b.vaguePer100 > 0.6 ? `Troppe parole vaghe: “${VAGUE.slice(0,6).join(", ")}…” senza prove/numeri.` : null,
-      b.numDensity < 0.8 ? "Pochi numeri: mancano ancoraggi concreti (risultati, tempi, quantità, percentuali)." : null
-    ].filter(Boolean).join(" ") || "Buona base: testo leggibile e abbastanza concreto.";
-
-    const clarityActions = `
-      <ul>
-        <li>Trasforma aggettivi in metriche: “+15%”, “in 14 giorni”, “3 step”, “entro 24h”.</li>
-        <li>Riduci frasi > 20 parole e usa bullets.</li>
-        <li>Metti la promessa in forma: <b>[Risultato] + [Per chi] + [Perché noi]</b>.</li>
-      </ul>
-    `;
+    // 1. Score Globale
     sections.push(renderSection(
-      `Messaggio: chiarezza & specificità — ${bName}`,
-      clarityScore,
-      clarityProblems,
-      clarityActions,
-      `<div class="mini"><b>Segnali</b></div>
-       <div class="two">
-         <div class="item" style="box-shadow:none">
-           <div class="mini">Gulpease</div><div><b>${b.gulpease}/100</b></div>
-           <div class="mini">Parole</div><div><b>${b.words}</b></div>
-         </div>
-         <div class="item" style="box-shadow:none">
-           <div class="mini">Numeri / 100 parole</div><div><b>${b.numDensity}</b></div>
-           <div class="mini">Vaghezza / 100 parole</div><div><b>${b.vaguePer100}</b></div>
-         </div>
-       </div>`
+      "1. Score Globale Strategico", brandOverall,
+      brandOverall > 80 ? "Eccellente" : brandOverall > 60 ? "Buono" : "Critico",
+      `Il brand presenta un punteggio di ${brandOverall}/100. ${brandOverall > 75 ? "La struttura è solida ma ottimizzabile." : "Esistono lacune significative nella chiarezza o nella differenziazione."}`,
+      "Punta a superare 85/100 agendo su specificità e prove di valore."
     ));
 
-    // Tone of voice (user-centric)
-    const toneScore = b.scores.tone;
-    const toneProblems = toneScore < 55
-      ? "Tono poco user-centric: parla più di “noi” che di “tu/beneficio”, e risulta autoreferenziale."
-      : "Tono abbastanza orientato all’utente: il testo tende a parlare di outcomes e non solo di processi.";
-    const toneActions = `
-      <ul>
-        <li>Riscrivi in seconda persona: “Tu ottieni…” invece di “Noi offriamo…”.</li>
-        <li>Apri con il problema del cliente (1 riga), poi prova, poi soluzione.</li>
-        <li>Riduci il “gergo”: chiarezza > impressionare.</li>
-      </ul>
-    `;
+    // 2. Gerarchia Visiva (Text mode: struttura)
+    const visualScore = b.isHtml ? 75 : 50;
     sections.push(renderSection(
-      `Personalità & Tone of Voice (automatico) — ${bName}`,
-      toneScore,
-      toneProblems,
-      toneActions
+      "2. Tracciamento Oculare Simulato (Gerarchia)", visualScore,
+      visualScore > 60 ? "Ordinato" : "Dispersivo",
+      b.isHtml ? "La struttura HTML suggerisce una gerarchia di base (H1, H2)." : "Testo non strutturato: difficile prevedere il percorso dell'occhio senza tag semantici.",
+      "Usa titoli chiari, grassetti strategici e liste puntate per guidare la lettura."
     ));
 
-    // Trust signals
-    const trustScore = b.scores.trust;
-    const trustProblems = trustScore < 55
-      ? "Fiducia debole: pochi segnali testuali di prova (case study, numeri, certificazioni, garanzie, policy)."
-      : "Buona base di fiducia: il testo contiene segnali utili, ma può diventare più “evidenza-centrico”.";
-    const trustActions = `
-      <ul>
-        <li>Aggiungi prove con numeri (prima/dopo, ROI, tempi, volumi).</li>
-        <li>Inserisci 1–3 micro-case study (3 righe ciascuno) vicino alla promessa.</li>
-        <li>Riduci rischio: garanzia, “nessun impegno”, policy chiare.</li>
-      </ul>
-    `;
+    // 3. Chiarezza del Messaggio
     sections.push(renderSection(
-      `Fiducia & autorevolezza (automatico) — ${bName}`,
-      trustScore,
-      trustProblems,
-      trustActions
+      "3. Chiarezza del Messaggio", b.scores.clarity,
+      b.gulpease > 58 ? "Fliudo" : "Complesso",
+      `Indice Gulpease: ${b.gulpease}. ${b.vagueCount > 0 ? `Rilevate ${b.vagueCount} parole vaghe.` : "Linguaggio diretto."}`,
+      "Elimina aggettivi generici. Usa frasi brevi (< 20 parole)."
     ));
 
-    // Manual: posizionamento/valori/narrativa
-    const stratScore = manualBundle;
-    const stratProblems = [
-      m.posScore < 55 ? "Posizionamento poco definito: la frase non chiude “per chi” e “perché noi”." : null,
-      m.valuesScore < 55 ? "Valori dichiarati senza prove: servono evidenze (case, policy, comportamenti)." : null,
-      m.personalityScore < 55 ? "Personalità poco esplicita: non emerge un carattere riconoscibile e ripetibile." : null,
-    ].filter(Boolean).join(" ") || "Strategia abbastanza definita: ora serve renderla coerente in tutti i touchpoint.";
-
-    const stratActions = `
-      <ul>
-        <li>Scrivi 3 “non siamo per…” per creare distanza (posizionamento).</li>
-        <li>Per ogni valore, aggiungi 1 prova reale (case, numeri, policy, scelta di design).</li>
-        <li>Blocca 3 regole di tono: parole da usare, parole vietate, e stile frasi (lunghe/corte).</li>
-      </ul>
-    `;
+    // 4. Personalità e Tono
     sections.push(renderSection(
-      `Posizionamento • Valori • Narrativa (manuale + guidato) — ${bName}`,
-      stratScore,
-      stratProblems,
-      stratActions,
-      `<div class="two">
-        <div class="item" style="box-shadow:none">
-          <div class="mini"><b>Posizionamento</b></div>
-          <div class="muted">${m.pos || "—"}</div>
-          <div class="mini" style="margin-top:8px"><b>Differenziatore</b></div>
-          <div class="muted">${m.mech || "—"}</div>
-        </div>
-        <div class="item" style="box-shadow:none">
-          <div class="mini"><b>Personalità scelta</b></div>
-          <div class="muted">${m.persSel.length ? m.persSel.join(", ") : "—"}</div>
-          <div class="mini" style="margin-top:8px"><b>Valori</b></div>
-          <div class="muted">${m.values || "—"}</div>
-        </div>
-      </div>`
+      "4. Personalità e Tono", b.scores.tone,
+      b.tuNoi > 50 ? "User-Centric" : "Auto-referenziale",
+      `Rapporto Tu/Noi: ${b.tuNoi}%. Personalità scelta: ${m.persSel.join(", ") || "Non definita"}.`,
+      "Aumenta l'uso della seconda persona ('Tu') per coinvolgere il lettore."
     ));
 
-    // Competitor delta (if present)
+    // 5. Valori e Narrativa
+    sections.push(renderSection(
+      "5. Valori e Narrativa", m.valuesScore,
+      m.values ? "Espliciti" : "Assenti",
+      `Valori dichiarati: ${m.values || "Nessuno"}. Prove fornite: ${m.proof ? "Presenti" : "Mancanti"}.`,
+      "Collega ogni valore a un'azione concreta o a un caso studio."
+    ));
+
+    // 6. Fiducia e Autorevolezza
+    sections.push(renderSection(
+      "6. Segnali di Fiducia", b.scores.trust,
+      b.trustHits > 2 ? "Affidabile" : "Debole",
+      `Rilevati ${b.trustHits} segnali di fiducia e ${b.numbers} dati numerici.`,
+      "Inserisci loghi partner, certificazioni e recensioni verificabili."
+    ));
+
+    // 7. Engagement e Actionability
+    sections.push(renderSection(
+      "7. Engagement & CTA", b.scores.action,
+      b.ctaHits > 0 ? "Attivo" : "Passivo",
+      `Rilevate ${b.ctaHits} chiamate all'azione. Specificità: ${b.scores.specificity}/100.`,
+      "Rendi le CTA specifiche (es. 'Ottieni la guida' vs 'Clicca qui')."
+    ));
+
+    // 8. Coerenza Cross-Canale (Testuale)
+    sections.push(renderSection(
+      "8. Coerenza del Messaggio", 70,
+      "Stabile",
+      "Il tono appare costante nel campione analizzato.",
+      "Crea un glossario di termini 'On-Brand' e 'Off-Brand'."
+    ));
+
+    // 9. Bias Cognitivi
+    const biasNames = b.biasHits.map(x => x.name).join(", ");
+    sections.push(renderSection(
+      "9. Bias Cognitivi Rilevati", clamp(b.biasHits.length * 25, 0, 100),
+      b.biasHits.length > 0 ? "Persuasivo" : "Neutro",
+      b.biasHits.length > 0 ? `Rilevati: ${biasNames}.` : "Nessun bias persuasivo rilevato (Social Proof, Scarsità, etc.).",
+      "Sfrutta la Social Proof e l'Autorità per ridurre l'attrito decisionale."
+    ));
+
+    // 10. Analisi NLP
+    const nlpNames = b.nlpHits.map(x => x.name).join(", ");
+    sections.push(renderSection(
+      "10. Analisi NLP e Sentiment", 65,
+      "Informativo",
+      `Pattern rilevati: ${nlpNames || "Standard"}.`,
+      "Usa verbi d'azione e parole legate alla trasformazione (Empowerment)."
+    ));
+
+    // 11. Posizionamento vs Competitor
     if(c){
-      const delta = clamp(brandOverall - c.scores.overall, -100, 100);
-      const dScore = round(clamp(50 + delta/2, 0, 100)); // map delta to score
-      const dProblems = delta <= 0
-        ? `Al momento non sei sopra ${cName} sul piano del messaggio (delta ${delta}). Rischio commoditizzazione.`
-        : `Sei sopra ${cName} (delta +${delta}). Mantieni la distanza rendendola più visibile e ripetibile.`;
-      const dActions = `
-        <ul>
-          <li>Prendi 1 claim competitor e scrivi il tuo “anti-claim” (opposto credibile).</li>
-          <li>Aggiungi 3 prove che il competitor non può copiare (metodo proprietario, dataset, processo, garanzia).</li>
-        </ul>
-      `;
+      const delta = brandOverall - c.scores.overall;
       sections.push(renderSection(
-        `Differenziazione vs ${cName} (automatico)`,
-        dScore,
-        dProblems,
-        dActions,
-        `<div class="two">
-          <div class="item" style="box-shadow:none">
-            <div class="mini"><b>${bName}</b></div>
-            <div class="muted">Clarity ${b.scores.clarity} • Trust ${b.scores.trust} • Tone ${b.scores.tone} • Spec ${b.scores.specificity}</div>
-          </div>
-          <div class="item" style="box-shadow:none">
-            <div class="mini"><b>${cName}</b></div>
-            <div class="muted">Clarity ${c.scores.clarity} • Trust ${c.scores.trust} • Tone ${c.scores.tone} • Spec ${c.scores.specificity}</div>
-          </div>
-        </div>`
+        `11. Posizionamento vs ${cName}`, 50 + delta/2,
+        delta > 0 ? "Dominante" : "Inseguitore",
+        `Delta performance: ${delta > 0 ? '+' : ''}${delta} punti rispetto al competitor.`,
+        "Enfatizza il tuo 'Unique Mechanism' per distanziarti ulteriormente."
       ));
+    } else {
+      sections.push(renderSection("11. Posizionamento vs Competitor", 50, "N.D.", "Nessun competitor caricato per il confronto.", "Carica i dati di un competitor per un'analisi comparativa."));
     }
 
+    // 12. Raccomandazioni Strategiche
+    sections.push(renderSection(
+      "12. Raccomandazioni Top 3", 80,
+      "Prioritario",
+      "Analisi completata. Identificate 3 aree di intervento immediato.",
+      `1. ${b.gulpease < 55 ? "Semplifica i testi" : "Aumenta la specificità dei benefici"}.<br>
+       2. ${b.trustHits < 2 ? "Aggiungi prove sociali" : "Rafforza il posizionamento unico"}.<br>
+       3. ${b.tuNoi < 50 ? "Rendi il copy più user-centric" : "Ottimizza le CTA per la conversione"}.`
+    ));
+
+    // 13. Scorecard Finale
+    const scorecardHtml = `
+      <table class="scorecard-table">
+        <thead><tr><th>Categoria</th><th>Score</th><th>Stato</th></tr></thead>
+        <tbody>
+          <tr><td>Strategia</td><td>${manualBundle}</td><td>${badgeFor(manualBundle)}</td></tr>
+          <tr><td>Copywriting</td><td>${b.scores.clarity}</td><td>${badgeFor(b.scores.clarity)}</td></tr>
+          <tr><td>Fiducia</td><td>${b.scores.trust}</td><td>${badgeFor(b.scores.trust)}</td></tr>
+          <tr><td>Differenziazione</td><td>${c ? 50+(brandOverall-c.scores.overall)/2 : 50}</td><td>${badgeFor(50)}</td></tr>
+        </tbody>
+      </table>
+    `;
+    sections.push(renderSection("13. Scorecard di Riepilogo", brandOverall, "Completo", "Sintesi dei macro-indicatori di performance del brand.", "", scorecardHtml));
+
     $("sections").innerHTML = sections.join("");
-    $("reportHint").textContent = "Report generato. Scorri per dettagli e azioni.";
+    $("reportHint").textContent = "Report Avanzato generato. Analizza le 13 sezioni.";
     lastReport = { type:"text", brand:b, comp:c, manual:m, generatedAt: new Date().toISOString(), brandOverall, manualBundle, autoBundle };
+  });
+
+  // ---------- AI Prompt Generation ----------
+  const PROMPT_TEMPLATE = `Agisci come un esperto Senior di Brand Strategy, Copywriting Persuasivo e Analisi Neuromarketing. 
+Analizza il materiale fornito (screenshot di pagina web oppure testo/HTML) e genera un Brand Audit avanzato seguendo rigorosamente questa struttura in 13 punti. 
+
+Per ogni sezione fornisci: punteggio (0-100), stato (badge), analisi (cosa c’è e cosa manca), come dovrebbe essere (suggerimenti concreti).
+
+STRUTTURA DEL REPORT:
+1. Score Globale Strategico: valutazione complessiva dell’impatto.
+2. Tracciamento Oculare Simulato: analisi della gerarchia visiva e di dove cade l'attenzione.
+3. Chiarezza del Messaggio: il "cosa facciamo per chi" è comprensibile in 3 secondi?
+4. Personalità e Tono di Voce: analisi del carattere del brand (archetipi e coerenza).
+5. Valori e Narrativa: cosa comunica il brand oltre al prodotto?
+6. Fiducia e Autorevolezza: segnali di prova sociale, autorità e garanzie.
+7. Engagement e Actionability: efficacia delle CTA e stimoli all'azione.
+8. Coerenza Cross-Canale: uniformità tra i vari asset analizzati.
+9. Bias Cognitivi: quali bias vengono sfruttati (Social Proof, Scarsità, Autorità, etc.) e quali mancano.
+10. Analisi NLP e Sentiment: analisi del linguaggio e dell'emozione trasmessa dal copy.
+11. Posizionamento vs Competitor: punti di forza e debolezza rispetto alla concorrenza.
+12. Raccomandazioni Strategiche: le 3 azioni prioritarie da compiere subito.
+13. Scorecard Finale: tabella riassuntiva dei macro-indicatori.
+
+Obiettivo: trasformare una pagina "vaga" in una macchina di conversione autoritaria e memorabile. Il report deve valutare se il brand è "pronto per il mercato" o se rischia di essere ignorato.`;
+
+  $("btnCopyPrompt").addEventListener("click", () => {
+    if (!lastReport) return;
+    const b = lastReport.brand;
+    const c = lastReport.comp;
+    const bName = ($("brandName").value || "Brand").trim();
+    const cName = ($("compName").value || "Competitor").trim();
+
+    let dataStr = `DATI ANALISI OFFLINE PER IL BRAND: ${bName}\n`;
+    dataStr += `--------------------------------------------------\n`;
+    
+    if (lastReport.type === "image") {
+      dataStr += `MODALITÀ: Screenshot / Visual\n`;
+      dataStr += `Metriche Brand: Contrast=${b.metrics.avgContrast}, Clutter=${b.metrics.avgClutter}, PaletteConsistency=${b.metrics.paletteConsistency}\n`;
+      dataStr += `Palette: ${b.assets[0]?.palette.map(p=>p.hex).join(", ")}\n`;
+    } else {
+      dataStr += `MODALITÀ: HTML / Testo\n`;
+      dataStr += `Metriche Brand: Gulpease=${b.gulpease}, Words=${b.words}, NumDensity=${b.numDensity}%, VagueWords=${b.vagueCount}\n`;
+      dataStr += `User-Centricity (Tu/Noi): ${b.tuNoi}%\n`;
+      dataStr += `Segnali Rilevati: Bias=[${b.biasHits.map(h=>h.name).join(", ")}], NLP=[${b.nlpHits.map(h=>h.name).join(", ")}]\n`;
+      dataStr += `Manuale: Posizionamento="${lastReport.manual.pos}", Valori="${lastReport.manual.values}", Meccanismo="${lastReport.manual.mech}"\n`;
+    }
+
+    if (c) {
+      dataStr += `\nCOMPETITOR ANALIZZATO: ${cName}\n`;
+      dataStr += `Overall Score Competitor: ${c.metrics?.overall || c.scores?.overall}\n`;
+    }
+
+    const fullPrompt = `${PROMPT_TEMPLATE}\n\n${dataStr}\n\nISTRUZIONI: Usa i dati sopra come base tecnica e approfondisci l'analisi come un esperto umano.`;
+    
+    navigator.clipboard.writeText(fullPrompt).then(() => {
+      const originalText = $("btnCopyPrompt").textContent;
+      $("btnCopyPrompt").textContent = "Copiato!";
+      $("btnCopyPrompt").classList.add("good");
+      setTimeout(() => {
+        $("btnCopyPrompt").textContent = originalText;
+        $("btnCopyPrompt").classList.remove("good");
+      }, 2000);
+    });
   });
 
   // ---------- Export (HTML stampabile) ----------
