@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Brand Audit Suite (Offline) — Screenshot / HTML-Testo</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#121b2e; --muted:#94a3b8; --text:#e5e7eb;
+      --line:rgba(255,255,255,.08); --accent:#7c3aed; --good:#10b981; --warn:#f59e0b; --bad:#ef4444;
+      --shadow: 0 18px 60px rgba(0,0,0,.45);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:var(--sans); background:linear-gradient(180deg, #070b14, var(--bg) 35%);
+      color:var(--text); min-height:100vh;
+    }
+    header{
+      position:sticky; top:0; z-index:10;
+      backdrop-filter: blur(10px);
+      background:rgba(7,11,20,.72);
+      border-bottom:1px solid var(--line);
+    }
+    .wrap{max-width:1160px; margin:0 auto; padding:16px 16px;}
+    .row{display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap;}
+    .brand{
+      display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:.2px;
+    }
+    .dot{width:10px;height:10px;border-radius:999px;background:var(--accent); box-shadow:0 0 0 6px rgba(124,58,237,.15)}
+    .pill{
+      border:1px solid var(--line); background:rgba(255,255,255,.03); color:var(--muted);
+      padding:8px 10px; border-radius:999px; font-size:12px; display:flex; gap:8px; align-items:center;
+    }
+    main{padding:22px 0 60px}
+    h1{margin:0; font-size:18px}
+    h2{margin:0 0 10px; font-size:18px}
+    h3{margin:0 0 8px; font-size:14px; color:#f3f4f6}
+    p{margin:8px 0; color:var(--muted); line-height:1.5}
+    .grid{display:grid; gap:14px}
+    @media (min-width: 980px){ .grid-2{grid-template-columns: 1.05fr .95fr} }
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{padding:14px 14px 0}
+    .card .bd{padding:14px}
+    .tabs{display:flex; gap:8px; flex-wrap:wrap}
+    .btn{
+      appearance:none; border:1px solid var(--line); background:rgba(255,255,255,.03);
+      color:var(--text); padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:700;
+      transition:.15s transform, .15s background, .15s border;
+      font-size:13px;
+    }
+    .btn:hover{transform:translateY(-1px); border-color: rgba(124,58,237,.4)}
+    .btn.primary{background:rgba(124,58,237,.22); border-color: rgba(124,58,237,.45)}
+    .btn.ghost{background:transparent}
+    .btn:disabled{opacity:.55; cursor:not-allowed; transform:none}
+    .seg{
+      display:flex; gap:8px; flex-wrap:wrap; padding:10px; border:1px solid var(--line); border-radius:14px;
+      background:rgba(255,255,255,.02);
+    }
+    .seg input{display:none}
+    .seg label{
+      cursor:pointer; padding:10px 12px; border-radius:12px; border:1px solid transparent;
+      background:rgba(255,255,255,.02); color:var(--muted); font-weight:800; font-size:13px;
+    }
+    .seg input:checked + label{
+      color:var(--text); background:rgba(124,58,237,.22); border-color: rgba(124,58,237,.45);
+    }
+    .field{display:grid; gap:8px; margin:10px 0}
+    .field label{font-size:12px; color:var(--muted); font-weight:800; letter-spacing:.2px}
+    input[type="text"], textarea, select{
+      width:100%; padding:12px 12px; border-radius:14px; border:1px solid var(--line);
+      background:rgba(0,0,0,.18); color:var(--text); outline:none;
+    }
+    textarea{min-height:140px; resize:vertical; font-family:var(--sans)}
+    .two{display:grid; gap:12px}
+    @media(min-width:760px){ .two{grid-template-columns:1fr 1fr} }
+    .mini{font-size:12px; color:var(--muted)}
+    .hr{height:1px; background:var(--line); margin:12px 0}
+    .kpi{
+      display:grid; grid-template-columns: repeat(2,1fr); gap:10px;
+    }
+    @media(min-width:760px){ .kpi{grid-template-columns: repeat(4,1fr)} }
+    .k{
+      border:1px solid var(--line); background:rgba(255,255,255,.02);
+      border-radius:14px; padding:12px;
+    }
+    .k .t{font-size:11px; color:var(--muted); font-weight:900; letter-spacing:.25px; text-transform:uppercase}
+    .k .v{font-size:22px; font-weight:900; margin-top:6px}
+    .badge{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px; border-radius:999px; font-size:11px; font-weight:900; border:1px solid var(--line);
+      color:var(--muted); background:rgba(255,255,255,.02);
+    }
+    .badge.good{color:var(--good); border-color: rgba(16,185,129,.35); background: rgba(16,185,129,.12)}
+    .badge.warn{color:var(--warn); border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.10)}
+    .badge.bad{color:var(--bad); border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.10)}
+    .list{display:grid; gap:10px}
+    .item{
+      border:1px solid var(--line); background:rgba(255,255,255,.02); border-radius:14px; padding:12px;
+    }
+    .item .top{display:flex; align-items:flex-start; justify-content:space-between; gap:10px}
+    .item b{font-size:13px}
+    .muted{color:var(--muted)}
+    .palette{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px}
+    .swatch{
+      width:38px; height:38px; border-radius:10px; border:1px solid rgba(255,255,255,.14);
+      position:relative; overflow:hidden;
+    }
+    .swatch code{
+      position:absolute; bottom:4px; left:6px; right:6px;
+      font-size:9px; color:rgba(255,255,255,.85); font-family:var(--mono);
+      text-shadow:0 1px 2px rgba(0,0,0,.6);
+    }
+    .thumbs{display:flex; gap:10px; flex-wrap:wrap}
+    .thumb{
+      width:120px; border:1px solid var(--line); border-radius:14px; overflow:hidden; background:rgba(255,255,255,.02);
+    }
+    .thumb img{display:block; width:100%; height:80px; object-fit:cover}
+    .thumb .cap{padding:8px 10px; font-size:11px; color:var(--muted); display:flex; justify-content:space-between; gap:8px}
+    .right{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .printNote{font-size:12px;color:var(--muted)}
+    @media print{
+      header,.no-print{display:none!important}
+      body{background:#fff; color:#000}
+      .card{box-shadow:none; border-color:#ddd}
+      .muted,.mini{color:#333}
+      a{color:#000}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap row">
+    <div class="brand"><span class="dot"></span><h1>Brand Audit Suite (Offline)</h1></div>
+    <div class="right">
+      <span class="pill">Standalone • Nessuna API • Offline</span>
+      <button class="btn ghost no-print" id="btnExport">Esporta Report (HTML stampabile)</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap grid grid-2">
+  <section class="card">
+    <div class="hd">
+      <h2>1) Impostazioni progetto</h2>
+      <p>Lavora per confronto: <b>Brand</b> vs <b>Competitor</b>. Puoi usare Screenshot o HTML/Testo per ognuno.</p>
+    </div>
+    <div class="bd">
+      <div class="two">
+        <div class="field">
+          <label>Nome Brand (tuo)</label>
+          <input id="brandName" type="text" placeholder="Es. CreativeScore, Studio X, Brand Y" value="Brand" />
+        </div>
+        <div class="field">
+          <label>Nome Competitor</label>
+          <input id="compName" type="text" placeholder="Es. Competitor A" value="Competitor" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Modalità analisi</label>
+        <div class="seg" role="tablist" aria-label="Modalità">
+          <input type="radio" name="mode" id="modeImage" checked />
+          <label for="modeImage">Screenshot (immagini)</label>
+          <input type="radio" name="mode" id="modeHtml" />
+          <label for="modeHtml">HTML / Testo</label>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div id="panelImage">
+        <h3>Modalità Screenshot</h3>
+        <p class="mini">Carica 1+ screenshot per il Brand e (opzionale) 1+ screenshot per il Competitor. La app calcola palette, coerenza visiva, contrasto stimato e densità visiva.</p>
+
+        <div class="two">
+          <div class="field">
+            <label>Screenshot — <span id="brandNameInlineA">Brand</span></label>
+            <input id="brandImages" type="file" accept="image/*" multiple />
+            <div class="thumbs" id="brandThumbs"></div>
+          </div>
+          <div class="field">
+            <label>Screenshot — <span id="compNameInlineA">Competitor</span></label>
+            <input id="compImages" type="file" accept="image/*" multiple />
+            <div class="thumbs" id="compThumbs"></div>
+          </div>
+        </div>
+        <div class="right no-print">
+          <button class="btn primary" id="runImage">Esegui Audit Screenshot</button>
+          <button class="btn" id="resetImage">Reset</button>
+        </div>
+      </div>
+
+      <div id="panelHtml" style="display:none">
+        <h3>Modalità HTML / Testo</h3>
+        <p class="mini">Incolla testo o carica un file .html. L’app fa analisi strutturale (leggibilità, specificità, “tu/noi”, numeri, segnali di fiducia) + checklist manuale.</p>
+
+        <div class="two">
+          <div class="field">
+            <label>Testo/HTML — <span id="brandNameInlineB">Brand</span></label>
+            <textarea id="brandText" placeholder="Incolla qui testo o HTML..."></textarea>
+            <div class="right">
+              <input id="brandHtmlFile" type="file" accept=".html,.htm,text/html" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Testo/HTML — <span id="compNameInlineB">Competitor</span></label>
+            <textarea id="compText" placeholder="Incolla qui testo o HTML... (opzionale)"></textarea>
+            <div class="right">
+              <input id="compHtmlFile" type="file" accept=".html,.htm,text/html" />
+            </div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <h3>Checklist manuale (brand)</h3>
+        <p class="mini">Questa parte serve per misurare ciò che offline non si può “indovinare”: posizionamento, valori, narrativa, personalità.</p>
+
+        <div class="two">
+          <div class="field">
+            <label>Posizionamento (1 frase): “Siamo i migliori per ___ perché ___”</label>
+            <input id="posStatement" type="text" placeholder="Es. E-commerce fashion che vogliono aumentare AOV perché..." />
+          </div>
+          <div class="field">
+            <label>Unique Mechanism / Differenziatore (nome + prova)</label>
+            <input id="uniqueMech" type="text" placeholder="Es. Metodo X, Framework Y, dati proprietari..." />
+          </div>
+        </div>
+
+        <div class="two">
+          <div class="field">
+            <label>Personalità (scegli 2–3)</label>
+            <select id="personality" multiple size="6">
+              <option>Audace / Challenger</option>
+              <option>Premium / Esclusivo</option>
+              <option>Pratico / Diretto</option>
+              <option>Empatico / Umano</option>
+              <option>Tecnico / Scientifico</option>
+              <option>Creativo / Visionario</option>
+              <option>Minimal / Essenziale</option>
+              <option>Tradizionale / Affidabile</option>
+            </select>
+            <div class="mini">Ctrl/Cmd per selezione multipla.</div>
+          </div>
+          <div class="field">
+            <label>Valori dichiarati (3–5 keyword)</label>
+            <input id="values" type="text" placeholder="Es. trasparenza, sostenibilità, performance, cura cliente" />
+            <label style="margin-top:8px">Prove (link/testimonianze/casi/policy) — descrizione breve</label>
+            <textarea id="valuesProof" placeholder="Es. Case study X con numeri, certificazioni, policy, iniziative..."></textarea>
+          </div>
+        </div>
+
+        <div class="right no-print">
+          <button class="btn primary" id="runHtml">Esegui Audit HTML/Testo</button>
+          <button class="btn" id="resetHtml">Reset</button>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <p class="printNote">Suggerimento: dopo l’audit puoi usare <b>Stampa</b> del browser → “Salva come PDF”.</p>
+    </div>
+  </section>
+
+  <section class="card" id="reportCard">
+    <div class="hd">
+      <h2>2) Report</h2>
+      <p id="reportHint">Esegui un audit per generare i punteggi e le raccomandazioni.</p>
+    </div>
+    <div class="bd" id="reportBody">
+      <div class="kpi">
+        <div class="k"><div class="t">Brand Score</div><div class="v" id="kBrandScore">—</div></div>
+        <div class="k"><div class="t">Competitor Score</div><div class="v" id="kCompScore">—</div></div>
+        <div class="k"><div class="t">Differenziazione</div><div class="v" id="kDiff">—</div></div>
+        <div class="k"><div class="t">Affidabilità</div><div class="v" id="kConfidence">—</div></div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="list" id="sections"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+  // ---------- Helpers UI ----------
+  const $ = (id) => document.getElementById(id);
+  const modeImage = $("modeImage");
+  const modeHtml = $("modeHtml");
+  const panelImage = $("panelImage");
+  const panelHtml = $("panelHtml");
+
+  function syncNames(){
+    const b = ($("brandName").value || "Brand").trim();
+    const c = ($("compName").value || "Competitor").trim();
+    $("brandNameInlineA").textContent = b;
+    $("brandNameInlineB").textContent = b;
+    $("compNameInlineA").textContent = c;
+    $("compNameInlineB").textContent = c;
+  }
+  $("brandName").addEventListener("input", syncNames);
+  $("compName").addEventListener("input", syncNames);
+  syncNames();
+
+  function setMode(){
+    const isImage = modeImage.checked;
+    panelImage.style.display = isImage ? "block" : "none";
+    panelHtml.style.display = isImage ? "none" : "block";
+    clearReportUI();
+  }
+  modeImage.addEventListener("change", setMode);
+  modeHtml.addEventListener("change", setMode);
+
+  function clearReportUI(){
+    $("reportHint").textContent = "Esegui un audit per generare i punteggi e le raccomandazioni.";
+    $("kBrandScore").textContent = "—";
+    $("kCompScore").textContent = "—";
+    $("kDiff").textContent = "—";
+    $("kConfidence").textContent = "—";
+    $("sections").innerHTML = "";
+  }
+
+  function badgeFor(score){
+    if (score >= 80) return `<span class="badge good">forte</span>`;
+    if (score >= 55) return `<span class="badge warn">medio</span>`;
+    return `<span class="badge bad">critico</span>`;
+  }
+
+  function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+  function round(n){ return Math.round(n); }
+
+  // ---------- Image analysis (offline) ----------
+  async function fileToImageData(file){
+    const dataUrl = await new Promise((res, rej)=>{
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result);
+      fr.onerror = rej;
+      fr.readAsDataURL(file);
+    });
+    const img = await new Promise((res, rej)=>{
+      const i = new Image();
+      i.onload = () => res(i);
+      i.onerror = rej;
+      i.src = dataUrl;
+    });
+    // Downscale for speed
+    const maxW = 520;
+    const scale = Math.min(1, maxW / img.width);
+    const w = Math.max(1, Math.floor(img.width * scale));
+    const h = Math.max(1, Math.floor(img.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext("2d", { willReadFrequently:true });
+    ctx.drawImage(img, 0, 0, w, h);
+    const id = ctx.getImageData(0,0,w,h);
+    return { dataUrl, w, h, imageData: id.data };
+  }
+
+  function rgbToHex(r,g,b){
+    const to = (x)=> x.toString(16).padStart(2,"0");
+    return `#${to(r)}${to(g)}${to(b)}`.toUpperCase();
+  }
+  function luminance(r,g,b){
+    // sRGB luminance approximation
+    return 0.2126*r + 0.7152*g + 0.0722*b;
+  }
+
+  function samplePalette(imageData, step=8, k=8){
+    // Simple quantization by bucketing (fast, offline)
+    const buckets = new Map();
+    const len = imageData.length;
+    for(let i=0;i<len;i+=4*step){
+      const r = imageData[i], g = imageData[i+1], b = imageData[i+2], a = imageData[i+3];
+      if(a < 200) continue;
+      // 24->12 bit bucket
+      const br = r>>4, bg = g>>4, bb = b>>4;
+      const key = (br<<8) | (bg<<4) | bb;
+      buckets.set(key, (buckets.get(key)||0)+1);
+    }
+    const sorted = [...buckets.entries()].sort((a,b)=>b[1]-a[1]).slice(0, k);
+    return sorted.map(([key,count])=>{
+      const br = (key>>8)&0xF, bg = (key>>4)&0xF, bb = key&0xF;
+      const r = (br<<4) + 8, g = (bg<<4) + 8, b = (bb<<4) + 8;
+      return { r,g,b, hex: rgbToHex(r,g,b), weight: count };
+    });
+  }
+
+  function paletteDistance(p1, p2){
+    // compare top colors by nearest match (rough)
+    if(!p1.length || !p2.length) return 100;
+    const distColor = (a,b)=> Math.sqrt((a.r-b.r)**2 + (a.g-b.g)**2 + (a.b-b.b)**2);
+    let sum = 0;
+    for(const c of p1){
+      let best = Infinity;
+      for(const d of p2){
+        best = Math.min(best, distColor(c,d));
+      }
+      sum += best;
+    }
+    const avg = sum / p1.length; // 0..~441
+    return clamp((avg/441)*100, 0, 100);
+  }
+
+  function estimateContrast(imageData, step=10){
+    // Estimate contrast distribution: average absolute luminance diff between adjacent samples
+    const len = imageData.length;
+    let total = 0, n = 0;
+    for(let i=0;i<len-4*step;i+=4*step){
+      const r1=imageData[i], g1=imageData[i+1], b1=imageData[i+2];
+      const r2=imageData[i+4*step], g2=imageData[i+4*step+1], b2=imageData[i+4*step+2];
+      const d = Math.abs(luminance(r1,g1,b1)-luminance(r2,g2,b2));
+      total += d; n++;
+    }
+    const avg = n ? total/n : 0; // 0..255
+    return clamp((avg/255)*100, 0, 100);
+  }
+
+  function estimateClutter(imageData, w, h, step=2){
+    // Very rough edge density via luminance gradient
+    let edges = 0, n = 0;
+    const idx = (x,y)=> (y*w + x)*4;
+    for(let y=1;y<h-1;y+=step){
+      for(let x=1;x<w-1;x+=step){
+        const i = idx(x,y);
+        const L = luminance(imageData[i],imageData[i+1],imageData[i+2]);
+        const iR = idx(x+1,y);
+        const iD = idx(x,y+1);
+        const LR = luminance(imageData[iR],imageData[iR+1],imageData[iR+2]);
+        const LD = luminance(imageData[iD],imageData[iD+1],imageData[iD+2]);
+        const g = Math.abs(LR-L) + Math.abs(LD-L);
+        if(g > 35) edges++;
+        n++;
+      }
+    }
+    const ratio = n ? edges/n : 0;
+    // higher ratio => more clutter
+    return clamp(ratio*180, 0, 100);
+  }
+
+  async function analyzeImageSet(files){
+    const assets = [];
+    for(const f of files){
+      const d = await fileToImageData(f);
+      const palette = samplePalette(d.imageData, 10, 8);
+      const contrast = estimateContrast(d.imageData, 12);
+      const clutter = estimateClutter(d.imageData, d.w, d.h, 2);
+      assets.push({
+        name: f.name,
+        dataUrl: d.dataUrl,
+        palette,
+        contrast,
+        clutter
+      Alberta
+      });
+    }
+    // aggregate
+    const avgContrast = assets.length ? assets.reduce((a,x)=>a+x.contrast,0)/assets.length : 0;
+    const avgClutter  = assets.length ? assets.reduce((a,x)=>a+x.clutter,0)/assets.length : 0;
+    // consistency palette: average pairwise distance
+    let pd = 0, pairs=0;
+    for(let i=0;i<assets.length;i++){
+      for(let j=i+1;j<assets.length;j++){
+        pd += paletteDistance(assets[i].palette, assets[j].palette);
+        pairs++;
+      }
+    }
+    const paletteInconsistency = pairs? (pd/pairs) : 0; // 0 good, 100 bad
+    const paletteConsistency = clamp(100 - paletteInconsistency, 0, 100);
+
+    // Scores (heuristics)
+    const visualIdentity = round( clamp( (paletteConsistency*0.55) + ((100-avgClutter)*0.20) + (avgContrast*0.25), 0, 100) );
+    const readability = round( clamp( (avgContrast*0.75) + ((100-avgClutter)*0.25), 0, 100) );
+    const consistency = round( clamp( paletteConsistency, 0, 100) );
+    const distinctiveness = round( clamp( (100 - paletteInconsistency*0.75) + (avgContrast*0.10) - (avgClutter*0.10), 0, 100) );
+
+    const overall = round( clamp((visualIdentity*0.30)+(consistency*0.30)+(readability*0.20)+(distinctiveness*0.20), 0, 100) );
+
+    return {
+      assets,
+      metrics: {
+        avgContrast: round(avgContrast),
+        avgClutter: round(avgClutter),
+        paletteConsistency: round(paletteConsistency),
+        visualIdentity, readability, consistency, distinctiveness,
+        overall
+      }
+    };
+  }
+
+  // ---------- Text/HTML analysis ----------
+  function stripHtml(html){
+    const d = document.createElement("div");
+    d.innerHTML = html;
+    return (d.textContent || d.innerText || "").replace(/\s+/g," ").trim();
+  }
+
+  function countWords(text){
+    const m = text.trim().match(/[A-Za-zÀ-ÖØ-öø-ÿ0-9’']+/g);
+    return m ? m.length : 0;
+  }
+
+  function gulpease(text){
+    // Gulpease = 89 + (300*frasi - 10*lettere)/parole
+    // Approx: sentences by [.?!]
+    const clean = text.replace(/\s+/g," ").trim();
+    if(!clean) return 0;
+    const words = countWords(clean);
+    const sentences = Math.max(1, (clean.match(/[.!?]+/g)||[]).length);
+    const letters = (clean.match(/[A-Za-zÀ-ÖØ-öø-ÿ]/g)||[]).length;
+    const score = 89 + (300*sentences - 10*letters)/Math.max(1,words);
+    return clamp(score, 0, 100);
+  }
+
+  const VAGUE = [
+    "innovativo","soluzioni","leader","eccellenza","qualità","professionale","competenza","esperienza",
+    "efficiente","veloce","smart","top","migliore","unico","rivoluzionario","su misura","ottimale"
+  ];
+  const CTA_WORDS = ["contatta","prenota","iscriviti","scopri","inizia","richiedi","compra","acquista","scarica","prova"];
+  const TRUST_WORDS = ["testimonianze","recensioni","case study","casi studio","certificazioni","garanzia","privacy","cookie","policy","partner","clienti","stampa"];
+
+  function textSignals(raw){
+    const isHtml = /<\/?[a-z][\s\S]*>/i.test(raw);
+    const text = isHtml ? stripHtml(raw) : raw.trim();
+    const lower = text.toLowerCase();
+
+    const words = countWords(text);
+    const numbers = (lower.match(/\b\d+([.,]\d+)?\b/g)||[]).length;
+    const numDensity = words ? (numbers/words)*100 : 0;
+
+    const vagueCount = VAGUE.reduce((acc,w)=> acc + (lower.match(new RegExp(`\\b${w}\\b`,"g"))||[]).length, 0);
+    const vaguePer100 = words ? (vagueCount/words)*100 : 0;
+
+    const tu = (lower.match(/\btu\b|\bte\b|\bti\b|\btua\b|\btue\b/g)||[]).length;
+    const noi = (lower.match(/\bnoi\b|\bnostr[oaie]\b/g)||[]).length;
+    const tuNoi = (tu+noi) ? (tu/(tu+noi))*100 : 0; // higher means more user-centric
+
+    const ctaHits = CTA_WORDS.reduce((acc,w)=> acc + (lower.match(new RegExp(`\\b${w}\\b`,"g"))||[]).length, 0);
+    const trustHits = TRUST_WORDS.reduce((acc,w)=> acc + (lower.match(new RegExp(w.replace(" ","\\s+"),"g"))||[]).length, 0);
+
+    const read = round(gulpease(text));
+
+    // Scores (heuristics)
+    const clarity = round(clamp( (read*0.35) + (clamp(numDensity*8,0,100)*0.25) + (tuNoi*0.20) + (clamp(100 - vaguePer100*18,0,100)*0.20), 0, 100));
+    const specificity = round(clamp( (clamp(numDensity*10,0,100)*0.55) + (clamp(100 - vaguePer100*20,0,100)*0.45), 0, 100));
+    const tone = round(clamp( (tuNoi*0.60) + (clamp(100 - vaguePer100*22,0,100)*0.25) + (read*0.15), 0, 100));
+    const trust = round(clamp( clamp(trustHits*18,0,100)*0.75 + clamp(numDensity*7,0,100)*0.25, 0, 100));
+    const action = round(clamp( clamp(ctaHits*20,0,100)*0.55 + clarity*0.45, 0, 100));
+
+    const overall = round(clamp(clarity*0.25 + specificity*0.25 + tone*0.20 + trust*0.20 + action*0.10, 0, 100));
+
+    return {
+      isHtml, text, words,
+      numbers, numDensity: round(numDensity),
+      vagueCount, vaguePer100: +vaguePer100.toFixed(2),
+      tu, noi, tuNoi: round(tuNoi),
+      ctaHits, trustHits,
+      gulpease: read,
+      scores: { clarity, specificity, tone, trust, action, overall }
+    };
+  }
+
+  function manualInputs(){
+    const pos = ($("posStatement").value||"").trim();
+    const mech = ($("uniqueMech").value||"").trim();
+    const values = ($("values").value||"").trim();
+    const proof = ($("valuesProof").value||"").trim();
+    const persSel = [...$("personality").selectedOptions].map(o=>o.value);
+
+    // Manual scoring heuristic (presence + depth proxy)
+    const posScore = clamp((pos.length>25?60:pos.length>10?40:15) + (mech.length>20?30:mech.length>8?15:0), 0, 100);
+    const valuesScore = clamp((values.split(",").filter(x=>x.trim()).length>=3?55:values?35:10) + (proof.length>80?40:proof.length>25?20:0), 0, 100);
+    const personalityScore = clamp((persSel.length>=2?65:persSel.length===1?40:15) + (pos.length>20?15:0) + (mech.length>12?20:0), 0, 100);
+
+    return { pos, mech, values, proof, persSel, posScore: round(posScore), valuesScore: round(valuesScore), personalityScore: round(personalityScore) };
+  }
+
+  // ---------- Report rendering ----------
+  function renderSection(title, score, problems, actions, extraHtml=""){
+    return `
+      <div class="item">
+        <div class="top">
+          <div>
+            <b>${title}</b> <span class="muted">• ${score}/100</span> ${badgeFor(score)}
+          </div>
+        </div>
+        <div class="hr"></div>
+        <div class="two">
+          <div>
+            <div class="mini"><b>Problemi (diagnosi)</b></div>
+            <div class="muted">${problems}</div>
+          </div>
+          <div>
+            <div class="mini"><b>Azioni (cosa fare)</b></div>
+            <div>${actions}</div>
+          </div>
+        </div>
+        ${extraHtml ? `<div class="hr"></div>${extraHtml}` : ``}
+      </div>
+    `;
+  }
+
+  function setKpis(bScore, cScore, confidence){
+    $("kBrandScore").textContent = `${bScore}`;
+    $("kCompScore").textContent = cScore==null ? "—" : `${cScore}`;
+    if(cScore==null){
+      $("kDiff").textContent = "—";
+    }else{
+      const diff = clamp(bScore - cScore, -100, 100);
+      $("kDiff").textContent = (diff>=0?`+${diff}`:`${diff}`);
+    }
+    $("kConfidence").textContent = confidence;
+  }
+
+  // ---------- Thumbs ----------
+  function renderThumbs(container, files){
+    container.innerHTML = "";
+    for(const f of files){
+      const fr = new FileReader();
+      fr.onload = () => {
+        const div = document.createElement("div");
+        div.className = "thumb";
+        div.innerHTML = `<img src="${fr.result}" alt="">
+          <div class="cap"><span>${f.name.slice(0,16)}${f.name.length>16?"…":""}</span><span>${Math.round(f.size/1024)}KB</span></div>`;
+        container.appendChild(div);
+      };
+      fr.readAsDataURL(f);
+    }
+  }
+
+  // ---------- Run: Image ----------
+  let lastReport = null;
+
+  $("brandImages").addEventListener("change", (e)=> renderThumbs($("brandThumbs"), [...e.target.files]));
+  $("compImages").addEventListener("change", (e)=> renderThumbs($("compThumbs"), [...e.target.files]));
+
+  $("resetImage").addEventListener("click", ()=>{
+    $("brandImages").value = "";
+    $("compImages").value = "";
+    $("brandThumbs").innerHTML = "";
+    $("compThumbs").innerHTML = "";
+    lastReport = null;
+    clearReportUI();
+  });
+
+  $("runImage").addEventListener("click", async ()=>{
+    syncNames();
+    const brandFiles = [...$("brandImages").files];
+    const compFiles = [...$("compImages").files];
+    if(!brandFiles.length){
+      alert("Carica almeno 1 screenshot per il Brand.");
+      return;
+    }
+    $("reportHint").textContent = "Analisi in corso…";
+    $("sections").innerHTML = "";
+
+    const b = await analyzeImageSet(brandFiles);
+    const c = compFiles.length ? await analyzeImageSet(compFiles) : null;
+
+    // Derived comparisons
+    const confidence = c ? "media" : "alta (solo brand)";
+    setKpis(b.metrics.overall, c?c.metrics.overall:null, confidence);
+
+    const bName = ($("brandName").value||"Brand").trim();
+    const cName = ($("compName").value||"Competitor").trim();
+
+    const topPalette = (set)=> {
+      if(!set.assets.length) return [];
+      // Merge palettes weights
+      const m = new Map();
+      for(const a of set.assets){
+        for(const p of a.palette){
+          m.set(p.hex, (m.get(p.hex)||0)+p.weight);
+        }
+      }
+      return [...m.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8).map(([hex,w])=>hex);
+    };
+    const bPal = topPalette(b);
+    const cPal = c ? topPalette(c) : [];
+    const palHtml = (arr)=> `<div class="palette">` + arr.map(h=>`<div class="swatch" style="background:${h}"><code>${h}</code></div>`).join("") + `</div>`;
+
+    const sections = [];
+
+    // Identità visiva
+    const idScore = b.metrics.visualIdentity;
+    const idProblems = [
+      b.metrics.paletteConsistency < 60 ? "Palette instabile tra asset: l’identità visiva cambia e riduce riconoscibilità." : null,
+      b.metrics.avgClutter > 65 ? "Densità visiva alta: “rumore” grafico che indebolisce gerarchia e premium-feel." : null,
+      b.metrics.avgContrast < 45 ? "Contrasto medio basso: rischio percezione “cheap” e leggibilità compromessa." : null,
+    ].filter(Boolean).join(" ") || "Base solida: non emergono criticità macroscopiche dai segnali visivi misurati.";
+
+    const idActions = `
+      <ul>
+        <li>Definisci 5–8 colori “core” e usa questi come vincolo (riduci i fuori-palette).</li>
+        <li>Riduci elementi decorativi e aumenta spazi bianchi nelle creatività più dense.</li>
+        <li>Alza il contrasto su testi/CTA (soprattutto su sfondi fotografici).</li>
+      </ul>
+    `;
+
+    sections.push(renderSection(
+      `Identità Visiva — ${bName}`,
+      idScore,
+      idProblems,
+      idActions,
+      `<div class="mini"><b>Palette dominante</b></div>${palHtml(bPal)}`
+    ));
+
+    // Coerenza cross-asset
+    const consScore = b.metrics.consistency;
+    const consProblems = consScore < 60
+      ? "Coerenza bassa tra screenshot: sembra un brand diverso a seconda del canale/creatività."
+      : "Coerenza buona: l’identità visiva tende a restare stabile tra asset.";
+    const consActions = `
+      <ul>
+        <li>Crea una “style rule” semplice: palette, 2 font, 1 stile immagini, 1 stile icone.</li>
+        <li>Rendi ripetibili 2–3 elementi distintivi (cornici, pattern, firma grafica, layout ricorrente).</li>
+      </ul>
+    `;
+    sections.push(renderSection(
+      `Coerenza Cross-Canale (visiva) — ${bName}`,
+      consScore,
+      consProblems,
+      consActions
+    ));
+
+    // Leggibilità/contrasto
+    const readScore = b.metrics.readability;
+    const readProblems = readScore < 55
+      ? "Leggibilità fragile: segnali di contrasto insufficiente e/o clutter che rende il messaggio faticoso."
+      : "Leggibilità discreta: il contenuto è interpretabile con poca frizione.";
+    const readActions = `
+      <ul>
+        <li>Testo: usa blocchi brevi, peso tipografico maggiore, e overlay scuri/chiari sulle foto.</li>
+        <li>CTA: aumenta dimensione e separazione (padding e spazio attorno).</li>
+      </ul>
+    `;
+    sections.push(renderSection(
+      `Leggibilità & Gerarchia (stimata) — ${bName}`,
+      readScore,
+      readProblems,
+      readActions
+    ));
+
+    // Distintività vs competitor (se presente)
+    if(c){
+      // Compare palettes
+      const dist = clamp(100 - paletteDistance(
+        b.assets[0]?.palette||[],
+        c.assets[0]?.palette||[]
+      ), 0, 100);
+      const compHtml = `<div class="two">
+        <div><div class="mini"><b>Palette — ${bName}</b></div>${palHtml(bPal)}</div>
+        <div><div class="mini"><b>Palette — ${cName}</b></div>${palHtml(cPal)}</div>
+      </div>`;
+      const dProblems = dist < 55
+        ? "Rischio “look-alike”: la palette/stile non crea distanza immediata rispetto al competitor (riconoscibilità più bassa nel feed)."
+        : "Buona distanza visiva: il look & feel si differenzia abbastanza dal competitor.";
+      const dActions = `
+        <ul>
+          <li>Introduci un elemento proprietario (pattern, shape, cornice, treatment foto) ripetuto ovunque.</li>
+          <li>Rendi “firmabile” il layout: stessa struttura per headline + proof + CTA.</li>
+        </ul>
+      `;
+      sections.push(renderSection(
+        `Differenziazione Visiva vs ${cName}`,
+        round(dist),
+        dProblems,
+        dActions,
+        compHtml
+      ));
+    }
+
+    $("sections").innerHTML = sections.join("");
+    $("reportHint").textContent = "Report generato. Scorri per dettagli e azioni.";
+    lastReport = { type:"image", brand:b, comp:c, generatedAt: new Date().toISOString() };
+  });
+
+  // ---------- Run: HTML/Text ----------
+  function readFileAsText(file){
+    return new Promise((res, rej)=>{
+      const fr = new FileReader();
+      fr.onload = ()=> res(fr.result);
+      fr.onerror = rej;
+      fr.readAsText(file);
+    });
+  }
+  $("brandHtmlFile").addEventListener("change", async (e)=>{
+    const f = e.target.files?.[0]; if(!f) return;
+    $("brandText").value = await readFileAsText(f);
+  });
+  $("compHtmlFile").addEventListener("change", async (e)=>{
+    const f = e.target.files?.[0]; if(!f) return;
+    $("compText").value = await readFileAsText(f);
+  });
+
+  $("resetHtml").addEventListener("click", ()=>{
+    $("brandText").value = "";
+    $("compText").value = "";
+    $("brandHtmlFile").value = "";
+    $("compHtmlFile").value = "";
+    $("posStatement").value = "";
+    $("uniqueMech").value = "";
+    $("values").value = "";
+    $("valuesProof").value = "";
+    [...$("personality").options].forEach(o=>o.selected=false);
+    lastReport = null;
+    clearReportUI();
+  });
+
+  $("runHtml").addEventListener("click", ()=>{
+    syncNames();
+    const brandRaw = $("brandText").value.trim();
+    const compRaw = $("compText").value.trim();
+    if(!brandRaw){
+      alert("Incolla o carica almeno il testo/HTML del Brand.");
+      return;
+    }
+
+    $("reportHint").textContent = "Analisi in corso…";
+    $("sections").innerHTML = "";
+
+    const b = textSignals(brandRaw);
+    const c = compRaw ? textSignals(compRaw) : null;
+    const m = manualInputs();
+
+    // Build hybrid brand score (auto + manual)
+    const manualBundle = round((m.posScore*0.40) + (m.valuesScore*0.35) + (m.personalityScore*0.25));
+    const autoBundle = b.scores.overall;
+    const brandOverall = round(clamp(autoBundle*0.55 + manualBundle*0.45, 0, 100));
+
+    const compOverall = c ? c.scores.overall : null;
+
+    const confidence = c ? "media" : "alta (solo brand)";
+    setKpis(brandOverall, compOverall, confidence);
+
+    const bName = ($("brandName").value||"Brand").trim();
+    const cName = ($("compName").value||"Competitor").trim();
+
+    const sections = [];
+
+    // Chiarezza & Specificità
+    const clarityScore = round(clamp(b.scores.clarity*0.55 + b.scores.specificity*0.45, 0, 100));
+    const clarityProblems = [
+      b.gulpease < 55 ? `Leggibilità bassa (Gulpease ${b.gulpease}). Frasi troppo lunghe o testi troppo densi.` : null,
+      b.vaguePer100 > 0.6 ? `Troppe parole vaghe: “${VAGUE.slice(0,6).join(", ")}…” senza prove/numeri.` : null,
+      b.numDensity < 0.8 ? "Pochi numeri: mancano ancoraggi concreti (risultati, tempi, quantità, percentuali)." : null
+    ].filter(Boolean).join(" ") || "Buona base: testo leggibile e abbastanza concreto.";
+
+    const clarityActions = `
+      <ul>
+        <li>Trasforma aggettivi in metriche: “+15%”, “in 14 giorni”, “3 step”, “entro 24h”.</li>
+        <li>Riduci frasi > 20 parole e usa bullets.</li>
+        <li>Metti la promessa in forma: <b>[Risultato] + [Per chi] + [Perché noi]</b>.</li>
+      </ul>
+    `;
+    sections.push(renderSection(
+      `Messaggio: chiarezza & specificità — ${bName}`,
+      clarityScore,
+      clarityProblems,
+      clarityActions,
+      `<div class="mini"><b>Segnali</b></div>
+       <div class="two">
+         <div class="item" style="box-shadow:none">
+           <div class="mini">Gulpease</div><div><b>${b.gulpease}/100</b></div>
+           <div class="mini">Parole</div><div><b>${b.words}</b></div>
+         </div>
+         <div class="item" style="box-shadow:none">
+           <div class="mini">Numeri / 100 parole</div><div><b>${b.numDensity}</b></div>
+           <div class="mini">Vaghezza / 100 parole</div><div><b>${b.vaguePer100}</b></div>
+         </div>
+       </div>`
+    ));
+
+    // Tone of voice (user-centric)
+    const toneScore = b.scores.tone;
+    const toneProblems = toneScore < 55
+      ? "Tono poco user-centric: parla più di “noi” che di “tu/beneficio”, e risulta autoreferenziale."
+      : "Tono abbastanza orientato all’utente: il testo tende a parlare di outcomes e non solo di processi.";
+    const toneActions = `
+      <ul>
+        <li>Riscrivi in seconda persona: “Tu ottieni…” invece di “Noi offriamo…”.</li>
+        <li>Apri con il problema del cliente (1 riga), poi prova, poi soluzione.</li>
+        <li>Riduci il “gergo”: chiarezza > impressionare.</li>
+      </ul>
+    `;
+    sections.push(renderSection(
+      `Personalità & Tone of Voice (automatico) — ${bName}`,
+      toneScore,
+      toneProblems,
+      toneActions
+    ));
+
+    // Trust signals
+    const trustScore = b.scores.trust;
+    const trustProblems = trustScore < 55
+      ? "Fiducia debole: pochi segnali testuali di prova (case study, numeri, certificazioni, garanzie, policy)."
+      : "Buona base di fiducia: il testo contiene segnali utili, ma può diventare più “evidenza-centrico”.";
+    const trustActions = `
+      <ul>
+        <li>Aggiungi prove con numeri (prima/dopo, ROI, tempi, volumi).</li>
+        <li>Inserisci 1–3 micro-case study (3 righe ciascuno) vicino alla promessa.</li>
+        <li>Riduci rischio: garanzia, “nessun impegno”, policy chiare.</li>
+      </ul>
+    `;
+    sections.push(renderSection(
+      `Fiducia & autorevolezza (automatico) — ${bName}`,
+      trustScore,
+      trustProblems,
+      trustActions
+    ));
+
+    // Manual: posizionamento/valori/narrativa
+    const stratScore = manualBundle;
+    const stratProblems = [
+      m.posScore < 55 ? "Posizionamento poco definito: la frase non chiude “per chi” e “perché noi”." : null,
+      m.valuesScore < 55 ? "Valori dichiarati senza prove: servono evidenze (case, policy, comportamenti)." : null,
+      m.personalityScore < 55 ? "Personalità poco esplicita: non emerge un carattere riconoscibile e ripetibile." : null,
+    ].filter(Boolean).join(" ") || "Strategia abbastanza definita: ora serve renderla coerente in tutti i touchpoint.";
+
+    const stratActions = `
+      <ul>
+        <li>Scrivi 3 “non siamo per…” per creare distanza (posizionamento).</li>
+        <li>Per ogni valore, aggiungi 1 prova reale (case, numeri, policy, scelta di design).</li>
+        <li>Blocca 3 regole di tono: parole da usare, parole vietate, e stile frasi (lunghe/corte).</li>
+      </ul>
+    `;
+    sections.push(renderSection(
+      `Posizionamento • Valori • Narrativa (manuale + guidato) — ${bName}`,
+      stratScore,
+      stratProblems,
+      stratActions,
+      `<div class="two">
+        <div class="item" style="box-shadow:none">
+          <div class="mini"><b>Posizionamento</b></div>
+          <div class="muted">${m.pos || "—"}</div>
+          <div class="mini" style="margin-top:8px"><b>Differenziatore</b></div>
+          <div class="muted">${m.mech || "—"}</div>
+        </div>
+        <div class="item" style="box-shadow:none">
+          <div class="mini"><b>Personalità scelta</b></div>
+          <div class="muted">${m.persSel.length ? m.persSel.join(", ") : "—"}</div>
+          <div class="mini" style="margin-top:8px"><b>Valori</b></div>
+          <div class="muted">${m.values || "—"}</div>
+        </div>
+      </div>`
+    ));
+
+    // Competitor delta (if present)
+    if(c){
+      const delta = clamp(brandOverall - c.scores.overall, -100, 100);
+      const dScore = round(clamp(50 + delta/2, 0, 100)); // map delta to score
+      const dProblems = delta <= 0
+        ? `Al momento non sei sopra ${cName} sul piano del messaggio (delta ${delta}). Rischio commoditizzazione.`
+        : `Sei sopra ${cName} (delta +${delta}). Mantieni la distanza rendendola più visibile e ripetibile.`;
+      const dActions = `
+        <ul>
+          <li>Prendi 1 claim competitor e scrivi il tuo “anti-claim” (opposto credibile).</li>
+          <li>Aggiungi 3 prove che il competitor non può copiare (metodo proprietario, dataset, processo, garanzia).</li>
+        </ul>
+      `;
+      sections.push(renderSection(
+        `Differenziazione vs ${cName} (automatico)`,
+        dScore,
+        dProblems,
+        dActions,
+        `<div class="two">
+          <div class="item" style="box-shadow:none">
+            <div class="mini"><b>${bName}</b></div>
+            <div class="muted">Clarity ${b.scores.clarity} • Trust ${b.scores.trust} • Tone ${b.scores.tone} • Spec ${b.scores.specificity}</div>
+          </div>
+          <div class="item" style="box-shadow:none">
+            <div class="mini"><b>${cName}</b></div>
+            <div class="muted">Clarity ${c.scores.clarity} • Trust ${c.scores.trust} • Tone ${c.scores.tone} • Spec ${c.scores.specificity}</div>
+          </div>
+        </div>`
+      ));
+    }
+
+    $("sections").innerHTML = sections.join("");
+    $("reportHint").textContent = "Report generato. Scorri per dettagli e azioni.";
+    lastReport = { type:"text", brand:b, comp:c, manual:m, generatedAt: new Date().toISOString(), brandOverall, manualBundle, autoBundle };
+  });
+
+  // ---------- Export (HTML stampabile) ----------
+  $("btnExport").addEventListener("click", ()=>{
+    const html = `
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brand Audit Report</title>
+<style>${document.querySelector("style").innerHTML}</style>
+</head><body>
+<header><div class="wrap row">
+  <div class="brand"><span class="dot"></span><h1>Brand Audit Report</h1></div>
+  <div class="pill">Generato: ${new Date().toLocaleString("it-IT")}</div>
+</div></header>
+<main class="wrap">
+  ${document.getElementById("reportCard").outerHTML}
+  <div class="card" style="margin-top:14px"><div class="bd">
+    <p class="mini"><b>Nota:</b> i punteggi automatici sono euristiche offline. Per misure “di mercato” (posizionamento reale) serve confronto su asset, canali e tempo.</p>
+  </div></div>
+</main>
+</body></html>`;
+    const blob = new Blob([html], {type:"text/html"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `brand-audit-report-${Date.now()}.html`;
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  });
+</script>
+</body>
+</html>
